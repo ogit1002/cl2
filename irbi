@@ -1,0 +1,202 @@
+#IR_1
+import warnings
+warnings.filterwarnings('ignore')
+
+import nltk
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer, PorterStemmer
+
+# Download necessary NLTK data
+nltk.download('stopwords')
+nltk.download('punkt')
+
+# Sample text document
+text_document = "Text preprocessing is an essential step in natural language processing"
+
+# Tokenize the document into words and convert to lowercase
+words = word_tokenize(text_document.lower())
+print(words)
+
+# Remove stop words
+stop_words = set(stopwords.words('english'))
+filtered_words = [word for word in words if word.lower() not in stop_words]
+print(filtered_words)
+
+# Apply stemming using PorterStemmer
+stemmer = PorterStemmer()
+stemmed_words = [stemmer.stem(word) for word in filtered_words]
+print(stemmed_words)
+
+# Apply lemmatization using WordNetLemmatizer
+lemmatizer = WordNetLemmatizer()
+lemmatized_words = [lemmatizer.lemmatize(word) for word in filtered_words]
+print(lemmatized_words)
+
+
+#IR_2
+import warnings
+warnings.filterwarnings('ignore')
+
+import re
+from collections import defaultdict
+
+# Sample documents
+documents = {
+    1: "This is the first document. It contains some text.",
+    2: "The second document is longer. It also contains some text.",
+    3: "This is the third document. It is different from the first two."
+}
+
+# Function to preprocess documents (convert to lowercase, remove stopwords, tokenize)
+def preprocess_document(doc):
+    tokens = re.findall(r'\w+', doc.lower())  # Tokenize and convert to lowercase
+    stop_words = set(["is", "the", "it", "and", "some"])  # Define stopwords
+    tokens = [token for token in tokens if token not in stop_words]  # Remove stopwords
+    return tokens
+
+# Building the inverted index
+inverted_index = defaultdict(list)
+for doc_id, doc_text in documents.items():
+    tokens = preprocess_document(doc_text)
+    for token in tokens:
+        inverted_index[token].append(doc_id)
+
+# Function to retrieve documents based on a query
+def retrieve_documents(query):
+    query_tokens = preprocess_document(query)
+    result = set()
+    for token in query_tokens:
+        if token in inverted_index:
+            result.update(inverted_index[token])
+    return list(result)
+
+# Example query
+query = "contains"
+matching_documents = retrieve_documents(query)
+
+# Output the matching documents
+if matching_documents:
+    print(f"Matching documents for query '{query}':")
+    for doc_id in matching_documents:
+        print(f"Document {doc_id}: {documents[doc_id]}")
+else:
+    print("No matching documents found.")
+
+
+#IR_3
+import pandas as pd
+from pgmpy.models import BayesianNetwork
+from pgmpy.estimators import MaximumLikelihoodEstimator
+from pgmpy.inference import VariableElimination
+
+# Load the dataset
+df = pd.read_csv("/content/drive/My Drive/7th sem/IR/heart_dataset.csv")
+
+# Display basic information about the dataset
+print(df.head())
+print(df.tail())
+print(df.info())
+print(df.describe())
+
+# Define the Bayesian Network structure
+model = BayesianNetwork([
+    ('age', 'condition'),
+    ('sex', 'condition'),
+    ('cp', 'condition'),
+    ('trestbps', 'condition'),
+    ('chol', 'condition')
+])
+
+# Fit the model using Maximum Likelihood Estimator
+model.fit(df, estimator=MaximumLikelihoodEstimator)
+
+# Perform inference using Variable Elimination
+HeartDiseasetest_infer = VariableElimination(model)
+
+# Query 1: Probability of heart disease given chest pain type (cp = 3)
+q1 = HeartDiseasetest_infer.query(variables=['condition'], evidence={'cp': 3})
+print(q1)
+
+# Query 2: Probability of heart disease given resting blood pressure (trestbps = 140)
+q2 = HeartDiseasetest_infer.query(variables=['condition'], evidence={'trestbps': 140})
+print(q2)
+
+# Query 3: Probability of heart disease given age (age = 50)
+q3 = HeartDiseasetest_infer.query(variables=['condition'], evidence={'age': 50})
+print(q3)
+
+# Query 4: Probability of heart disease given cholesterol level (chol = 220)
+q4 = HeartDiseasetest_infer.query(variables=['condition'], evidence={'chol': 220})
+print(q4)
+
+#IR_4
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from warnings import filterwarnings
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.linear_model import LogisticRegression
+df = pd.read_csv("spam_mail.csv")
+df.head()
+df.isna().sum()
+df = df.dropna(subset=['Body'])
+df.shape
+df.dtypes
+df.describe()
+df1=df
+df1.duplicated().sum()
+df2 = df1.drop_duplicates()
+df2.duplicated().sum()
+df2["Body"] = df2["Body"].replace("\n","",regex=True)
+df2.head()
+x_train,x_test,y_train,y_test = train_test_split(df2['Body'],df2['Label'],test_size=0.1)
+x_train
+v = CountVectorizer()
+x_train_count = v.fit_transform(x_train)
+x_test_count = v.transform(x_test)
+x_train_count.toarray()
+model = LogisticRegression()
+model.fit(x_train_count,y_train)
+model.score(x_test_count,y_test)
+email = ['50% discount on data science courses signup now']
+new_email = v.transform(email)
+ans = model.predict(new_email)
+if ans[0] == 1:
+print("Spam")
+else :
+print("Not Spam")
+
+#IR_5
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_iris
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.preprocessing import StandardScaler
+from scipy.cluster.hierarchy import dendrogram,linkage
+from sklearn.decomposition import PCA
+iris = load_iris()
+X = iris.data
+y = iris.target
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+n_clusters = 3
+agg_clustering = AgglomerativeClustering(n_clusters=n_clusters,linkage='ward')
+cluster_labels = agg_clustering.fit_predict(X_pca)
+linkage_matrix = linkage(X_pca, method='ward')
+# linked = linkage(X_pca,'ward')
+plt.figure(figsize=(12,6))
+dendrogram(linkage_matrix)
+plt.title("Agglomerative Hierarchical Clustering")
+plt.show()
+print("Cluster Labels:")
+print(cluster_labels)
+plt.scatter(X_pca[:,0] , X_pca[:,1], c = cluster_labels, cmap='rainbow')
+plt.xlabel('Principal component 1')
+plt.ylabel('Principal component 2')
+plt.title('Agglomerative Hierarchical Clustering')
+plt.show()
